@@ -14,7 +14,7 @@ import java.util.ArrayList;
 /**
  * Created by inva on 10/26/2016.
  */
-public class StartGUI extends JFrame {
+public class GUI extends JFrame {
 
     private JPanel panel = new JPanel(new BorderLayout());
     private JPanel buttonPanel = new JPanel(new FlowLayout());
@@ -32,14 +32,18 @@ public class StartGUI extends JFrame {
     private final DefaultTableModel tableModel = (DefaultTableModel) objectsTable.getModel();
     private JMenuBar menuBar = new JMenuBar();
 
-    public StartGUI(AmazonS3 s3Client){
+    public GUI(AmazonS3 s3Client){
         super("AWS File Downloader");
         setResizable(false);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         JMenu menu = new JMenu("File");
         JMenuItem menuExit = new JMenuItem("Exit", KeyEvent.VK_X);
-
+        menuExit.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
         menu.add(menuExit);
         menuBar.add(menu);
         menuBar.setOpaque(true);
@@ -105,7 +109,7 @@ public class StartGUI extends JFrame {
         uploadButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser fileChooser = new JFileChooser();
-                int ret = fileChooser.showDialog(StartGUI.this, "Choose File");
+                int ret = fileChooser.showDialog(GUI.this, "Choose File");
                 if (ret == JFileChooser.APPROVE_OPTION){
                     File file = fileChooser.getSelectedFile();
                     driver.uploadTo(activeBucket, file.getName(), file);
@@ -122,6 +126,7 @@ public class StartGUI extends JFrame {
         setJMenuBar(menuBar);
         pack();
         setVisible(true);
+        setLocationRelativeTo(null);
     }
 
     public void refreshTable(){

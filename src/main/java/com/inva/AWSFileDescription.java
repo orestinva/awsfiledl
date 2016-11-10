@@ -20,14 +20,8 @@ public class AWSFileDescription {
         return objectName;
     }
 
-    public String isFolderToStr() {
-        String strIsFolder;
-        if (isFolder == false){
-            strIsFolder = "File";
-        } else {
-            strIsFolder = "Folder";
-        }
-        return strIsFolder;
+    public boolean getIsFolder(){
+        return isFolder;
     }
 
     public String getSizeToStr() {

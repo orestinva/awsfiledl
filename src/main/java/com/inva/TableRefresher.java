@@ -25,10 +25,20 @@ public class TableRefresher extends SwingWorker<DefaultTableModel, Void> {
             String[] data = new String[3];
             data[0] = d.getObjectName();
             data[1] = d.getSizeToStr();
-            data[2] = d.isFolderToStr();
+            data[2] = isFolderToStr(d.getIsFolder());
             tableModel.addRow(data);
         }
         return tableModel;
+    }
+
+    public String isFolderToStr(boolean isFolder) {
+        String strIsFolder;
+        if (isFolder == false){
+            strIsFolder = "File";
+        } else {
+            strIsFolder = "Folder";
+        }
+        return strIsFolder;
     }
 
     public void done(){
