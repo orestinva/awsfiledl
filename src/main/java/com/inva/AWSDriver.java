@@ -15,8 +15,6 @@ import java.util.List;
  * Created by inva on 10/26/2016.
  */
 public class AWSDriver {
-    private ObjectListing objectListing;
-    private List<Bucket> bucketList;
     private AmazonS3 s3;
     private TransferManager transferManager;
 
@@ -26,7 +24,7 @@ public class AWSDriver {
     }
 
     public ArrayList<String> getBucketList(){
-        bucketList = s3.listBuckets();
+        List<Bucket> bucketList = s3.listBuckets();
         ArrayList<String> bucketsStringList = new ArrayList<String>();
         for (Bucket b : bucketList){
             bucketsStringList.add(b.getName());
@@ -49,17 +47,30 @@ public class AWSDriver {
     }
 
     public void copyTo(String bucket, String key, File file){
-        transferManager.download(bucket, key, file);
-
+        try {
+            transferManager.download(bucket, key, file);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public void uploadTo(String bucket, String key, File file){
-        transferManager.upload(bucket, key, file);
+        try {
+            transferManager.upload(bucket, key, file);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
     public void deleteSelectedObject(String bucketName, String keyName){
-        s3.deleteObject(new DeleteObjectRequest(bucketName, keyName));
+        try {
+            s3.deleteObject(new DeleteObjectRequest(bucketName, keyName));
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
     }
 
 }

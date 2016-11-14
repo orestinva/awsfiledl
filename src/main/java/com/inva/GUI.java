@@ -1,6 +1,7 @@
 package com.inva;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.transfer.Upload;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -25,12 +26,19 @@ public class GUI extends JFrame {
     private JTable objectsTable = new JTable();
     private JPanel bucketsPanel = new JPanel(new FlowLayout());
     private JLabel bucketLabel = new JLabel("Select bucket:");
-    private AWSDriver driver;
     private String activeBucket;
     private JScrollPane scrollPane;
     private String path = "C:" + File.separator +"temp"+File.separator;
     private final DefaultTableModel tableModel = (DefaultTableModel) objectsTable.getModel();
     private JMenuBar menuBar = new JMenuBar();
+
+    private DownloadButtonHandler dlHandler;
+    private AWSDriver driver;
+    private DownloadEvent dlEvent;
+    private UploadButtonHandler uplHandler;
+    private UploadEvent uplEvent;
+    private DeleteEvent delEvent;
+    private DeleteEventHandler delHandler;
 
     public GUI(AmazonS3 s3Client){
         super("AWS File Downloader");
@@ -49,7 +57,10 @@ public class GUI extends JFrame {
         menuBar.setOpaque(true);
         menuBar.setPreferredSize(new Dimension(200, 20));
 
-        driver = new AWSDriver(s3Client);
+        this.driver = new AWSDriver(s3Client);
+        this.dlHandler = new DownloadButtonHandler(driver);
+        this.uplHandler = new UploadButtonHandler(driver);
+        this.delHandler = new DeleteEventHandler(driver);
 
         String[] columns = {"Name", "Size", "Type"};
         tableModel.setColumnIdentifiers(columns);
@@ -92,7 +103,10 @@ public class GUI extends JFrame {
             objectsTable.getSelectedRow();
             String objectName = (String)objectsTable.getValueAt(objectsTable.getSelectedRow(), 0);
             File file = new File(path+objectName);
-            driver.copyTo(activeBucket, objectName, file);
+            dlEvent = new DownloadEvent(activeBucket, objectName, file);
+                if(dlHandler != null){
+                    dlHandler.handleEvent(dlEvent);
+                }
             }
         });
         buttonPanel.add(downloadButton);
@@ -101,7 +115,12 @@ public class GUI extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 objectsTable.getSelectedRow();
                 String objectName = (String)objectsTable.getValueAt(objectsTable.getSelectedRow(), 0);
-                driver.deleteSelectedObject(activeBucket, objectName);
+
+                //driver.deleteSelectedObject(activeBucket, objectName);
+                delEvent = new DeleteEvent(activeBucket, objectName);
+                if(delHandler != null){
+                    delHandler.handleEvent(delEvent);
+                }
             }
         });
         buttonPanel.add(deleteButton);
@@ -112,7 +131,10 @@ public class GUI extends JFrame {
                 int ret = fileChooser.showDialog(GUI.this, "Choose File");
                 if (ret == JFileChooser.APPROVE_OPTION){
                     File file = fileChooser.getSelectedFile();
-                    driver.uploadTo(activeBucket, file.getName(), file);
+                    uplEvent = new UploadEvent(activeBucket, file.getName(), file);
+                    if(uplHandler != null){
+                        uplHandler.handleEvent(uplEvent);
+                    }
                 }
             }
         });
@@ -137,6 +159,9 @@ public class GUI extends JFrame {
         (new TableRefresher(driver, activeBucket, tableModel)).execute();
         tableModel.fireTableDataChanged();
         objectsTable.setModel(tableModel);
+    }
+    public void setDlEventHandler(DownloadButtonHandler dlHandler){
+        this.dlHandler = dlHandler;
     }
 
 }
