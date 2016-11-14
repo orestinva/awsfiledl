@@ -57,8 +57,9 @@ public class CredentialsInputWindow  extends JFrame{
         setLocationRelativeTo(null);
     }
     public void setCredentials(String accessKey, String secretKey){
-        this.secretKey = secretKey;
-        this.accessKey = accessKey;
+        // + remove whitespaces
+        this.secretKey = secretKey.replaceAll("\\s+","");
+        this.accessKey = accessKey.replaceAll("\\s+","");
     }
 
     public String getAccessKey(){

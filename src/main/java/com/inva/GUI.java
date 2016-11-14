@@ -116,7 +116,6 @@ public class GUI extends JFrame {
                 objectsTable.getSelectedRow();
                 String objectName = (String)objectsTable.getValueAt(objectsTable.getSelectedRow(), 0);
 
-                //driver.deleteSelectedObject(activeBucket, objectName);
                 delEvent = new DeleteEvent(activeBucket, objectName);
                 if(delHandler != null){
                     delHandler.handleEvent(delEvent);
