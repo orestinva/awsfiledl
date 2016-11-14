@@ -28,8 +28,8 @@ public class CredentialsInputWindow  extends JFrame{
         super("Please provide user credentials");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        accessKeyField.setPreferredSize(new Dimension(200, 25));
-        secretKeyField.setPreferredSize(new Dimension(270, 25));
+        accessKeyField.setPreferredSize(new Dimension(200, 20));
+        secretKeyField.setPreferredSize(new Dimension(270, 20));
         accessKeyPanel.add(accessKeyLabel);
         accessKeyPanel.add(accessKeyField);
         secretKeyPanel.add(secretKeyLabel);
