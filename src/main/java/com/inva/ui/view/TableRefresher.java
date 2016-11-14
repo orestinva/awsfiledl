@@ -1,4 +1,7 @@
-package com.inva;
+package com.inva.ui.view;
+
+import com.inva.aws.AWSDriver;
+import com.inva.aws.AWSFileDescription;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

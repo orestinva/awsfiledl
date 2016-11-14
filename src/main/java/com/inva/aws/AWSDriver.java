@@ -1,4 +1,4 @@
-package com.inva;
+package com.inva.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;

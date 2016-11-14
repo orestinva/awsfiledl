@@ -1,7 +1,13 @@
-package com.inva;
+package com.inva.ui.view;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.transfer.Upload;
+import com.inva.aws.AWSDriver;
+import com.inva.ui.controller.DeleteEventHandler;
+import com.inva.ui.controller.DownloadButtonHandler;
+import com.inva.ui.controller.UploadButtonHandler;
+import com.inva.ui.events.DeleteEvent;
+import com.inva.ui.events.DownloadEvent;
+import com.inva.ui.events.UploadEvent;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

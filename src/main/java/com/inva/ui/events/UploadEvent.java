@@ -1,4 +1,6 @@
-package com.inva;
+package com.inva.ui.events;
+
+import com.inva.ui.events.IEvent;
 
 import java.io.File;
 

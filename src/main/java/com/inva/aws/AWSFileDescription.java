@@ -1,4 +1,4 @@
-package com.inva;
+package com.inva.aws;
 
 /**
  * Created by inva on 10/26/2016.
