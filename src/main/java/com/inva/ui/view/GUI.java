@@ -51,6 +51,9 @@ public class GUI extends JFrame {
         setResizable(false);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
+        //check if properties exist, if no - set default
+        settingsDialog.checkIfPropertiesExist();
+
         //Adding file menu
         JMenu fileMenu = new JMenu("File");
         JMenuItem menuExit = new JMenuItem("Exit", KeyEvent.VK_X);
@@ -69,7 +72,6 @@ public class GUI extends JFrame {
 
         //Adding a listener to open settings dialog when menu is pressed
         menuSettings.addActionListener(new ActionListener() {
-            @Override
             public void actionPerformed(ActionEvent e) {
                 settingsDialog = new SettingsDialog();
             }
@@ -139,7 +141,7 @@ public class GUI extends JFrame {
             String objectName = (String)objectsTable.getValueAt(objectsTable.getSelectedRow(), 0);
                 //Getting path to download to
                 path = settingsDialog.getSaveDir();
-            File file = new File(path+objectName);
+            File file = new File(path+File.separator+objectName);
             dlEvent = new DownloadEvent(activeBucket, objectName, file);
                 if(dlHandler != null){
                     dlHandler.handleEvent(dlEvent);
