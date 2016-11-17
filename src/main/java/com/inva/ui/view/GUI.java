@@ -203,8 +203,5 @@ public class GUI extends JFrame {
         tableModel.fireTableDataChanged();
         objectsTable.setModel(tableModel);
     }
-    public void setDlEventHandler(DownloadButtonHandler dlHandler){
-        this.dlHandler = dlHandler;
-    }
 
 }
