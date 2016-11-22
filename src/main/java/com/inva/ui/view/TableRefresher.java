@@ -14,22 +14,30 @@ public class TableRefresher extends SwingWorker<DefaultTableModel, Void> {
     private AWSDriver driver;
     private DefaultTableModel tableModel;
     private String activeBucket;
-    public TableRefresher(AWSDriver driver, String activeBucket, DefaultTableModel tableModel){
+    private GUI gui;
+
+    public TableRefresher(AWSDriver driver, String activeBucket, DefaultTableModel tableModel, GUI gui){
         this.driver = driver;
         this.tableModel = tableModel;
         this.activeBucket = activeBucket;
+        this.gui = gui;
     }
 
     protected DefaultTableModel doInBackground() throws Exception {
 
         //get new rows
-        ArrayList<AWSFileDescription> descriptions = (ArrayList<AWSFileDescription>) driver.getFileDescriptions(activeBucket);
-        for(AWSFileDescription d : descriptions){
-            String[] data = new String[3];
-            data[0] = d.getObjectName();
-            data[1] = d.getSizeToStr();
-            data[2] = isFolderToStr(d.getIsFolder());
-            tableModel.addRow(data);
+        try {
+            gui.disableButtons();
+            ArrayList<AWSFileDescription> descriptions = (ArrayList<AWSFileDescription>) driver.getFileDescriptions(activeBucket);
+            for(AWSFileDescription d : descriptions){
+                String[] data = new String[3];
+                data[0] = d.getObjectName();
+                data[1] = d.getSizeToStr();
+                data[2] = isFolderToStr(d.getIsFolder());
+                tableModel.addRow(data);
+            }
+        } catch (Exception e){
+            //todo = handle this exc
         }
         return tableModel;
     }
@@ -45,6 +53,6 @@ public class TableRefresher extends SwingWorker<DefaultTableModel, Void> {
     }
 
     public void done(){
-
+        gui.enableButtons();
     }
 }

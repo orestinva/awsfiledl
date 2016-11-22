@@ -2,7 +2,7 @@ package com.inva.ui.view;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.inva.aws.AWSDriver;
-import com.inva.ui.controller.DeleteEventHandler;
+import com.inva.ui.controller.DeleteButtonHandler;
 import com.inva.ui.controller.DownloadButtonHandler;
 import com.inva.ui.controller.UploadButtonHandler;
 import com.inva.ui.events.DeleteEvent;
@@ -23,17 +23,22 @@ import java.util.ArrayList;
  */
 public class GUI extends JFrame {
 
-    private JPanel panel = new JPanel(new BorderLayout());
+    private JPanel objPanel = new JPanel(new BorderLayout());
+    private JPanel taskPanel = new JPanel(new FlowLayout());
     private JPanel buttonPanel = new JPanel(new FlowLayout());
     private JButton downloadButton = new JButton("Download");
     private JButton deleteButton = new JButton("Delete");
     private JButton uploadButton = new JButton("Upload..");
     private JComboBox buckets = new JComboBox();
     private JTable objectsTable = new JTable();
+    private JTable taskTable = new JTable();
     private JPanel bucketsPanel = new JPanel(new FlowLayout());
     private JLabel bucketLabel = new JLabel("Select bucket:");
     private String activeBucket;
+    private JTabbedPane tabbedPane = new JTabbedPane();
+    private TaskTableModel taskTableModel;
     private JScrollPane scrollPane;
+    private JScrollPane taskScrollPane;
     private String path;
     private final DefaultTableModel tableModel = (DefaultTableModel) objectsTable.getModel();
     private JMenuBar menuBar = new JMenuBar();
@@ -43,14 +48,24 @@ public class GUI extends JFrame {
     private UploadButtonHandler uplHandler;
     private UploadEvent uplEvent;
     private DeleteEvent delEvent;
-    private DeleteEventHandler delHandler;
+    private DeleteButtonHandler delHandler;
     private SettingsDialog settingsDialog;
 
     public GUI(AmazonS3 s3Client){
         super("AWS File Downloader");
         setResizable(false);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (UnsupportedLookAndFeelException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         //check if properties exist, if no - set default
         settingsDialog.checkIfPropertiesExist();
 
@@ -79,15 +94,21 @@ public class GUI extends JFrame {
         viewMenu.add(menuSettings);
         menuBar.add(viewMenu);
 
+        //adding tasktablemodel
+        taskTableModel = new TaskTableModel();
+        taskTable.setModel(taskTableModel);
+        taskTable.getColumn("Status").setCellRenderer(new TaskTableProgressCellRenderer());
+
         //Configuring and enabling menu bar
         menuBar.setOpaque(true);
         menuBar.setPreferredSize(new Dimension(200, 20));
 
+
         //Adding driver and handlers
-        this.driver = new AWSDriver(s3Client);
-        this.dlHandler = new DownloadButtonHandler(driver);
-        this.uplHandler = new UploadButtonHandler(driver);
-        this.delHandler = new DeleteEventHandler(driver);
+        this.driver = new AWSDriver(s3Client, taskTableModel);
+        this.dlHandler = new DownloadButtonHandler(driver, this);
+        this.uplHandler = new UploadButtonHandler(driver, this);
+        this.delHandler = new DeleteButtonHandler(driver);
 
         //Adding header to table
         String[] columns = {"Name", "Size", "Type"};
@@ -99,7 +120,7 @@ public class GUI extends JFrame {
         objectsTable.getTableHeader().setReorderingAllowed(false);
         objectsTable.getTableHeader().setResizingAllowed(true);
         scrollPane = new JScrollPane(objectsTable);
-        panel.add(scrollPane, BorderLayout.CENTER);
+        objPanel.add(scrollPane, BorderLayout.CENTER);
 
         //Adding drop-down list with buckets
         buckets.setPreferredSize(new Dimension(200, 20));
@@ -118,21 +139,17 @@ public class GUI extends JFrame {
                 refreshTable();
 
                 //enabling buttons
-                downloadButton.setEnabled(true);
-                uploadButton.setEnabled(true);
-                deleteButton.setEnabled(true);
+                enableButtons();
             }
         });
         bucketsPanel.add(bucketLabel);
         bucketsPanel.add(buckets);
 
-        //Adding drop-down and its label to root panel
-        panel.add(bucketsPanel, BorderLayout.PAGE_START);
+        //Adding drop-down and its label to root objPanel
+        objPanel.add(bucketsPanel, BorderLayout.PAGE_START);
 
         // All buttons are disabled until some bucket is chosen (in listener)
-        downloadButton.setEnabled(false);
-        uploadButton.setEnabled(false);
-        deleteButton.setEnabled(false);
+        disableButtons();
 
         //Adding a listener to download a file when downloadButton is pressed
         downloadButton.addActionListener(new ActionListener() {
@@ -146,6 +163,7 @@ public class GUI extends JFrame {
                 if(dlHandler != null){
                     dlHandler.handleEvent(dlEvent);
                 }
+
             }
         });
         buttonPanel.add(downloadButton);
@@ -160,6 +178,7 @@ public class GUI extends JFrame {
                 if(delHandler != null){
                     delHandler.handleEvent(delEvent);
                 }
+
             }
         });
         buttonPanel.add(deleteButton);
@@ -181,13 +200,22 @@ public class GUI extends JFrame {
             }
         });
         buttonPanel.add(uploadButton);
-        panel.add(scrollPane, BorderLayout.CENTER);
+        objPanel.add(scrollPane, BorderLayout.CENTER);
 
-        panel.add(buttonPanel, BorderLayout.PAGE_END);
+        objPanel.add(buttonPanel, BorderLayout.PAGE_END);
 
-        //Configuring root panel
-        panel.setPreferredSize(new Dimension(640, 480));
-        setContentPane(panel);
+        //Configuring root objPanel
+        objPanel.setPreferredSize(new Dimension(640, 480));
+        tabbedPane.add(objPanel);
+        tabbedPane.setTitleAt(0, "Objects");
+        tabbedPane.add(taskPanel);
+
+        taskScrollPane = new JScrollPane(taskTable);
+        taskPanel.add(taskScrollPane);
+        tabbedPane.add(taskPanel);
+        tabbedPane.setTitleAt(1, "Tasks");
+        tabbedPane.setVisible(true);
+        setContentPane(tabbedPane);
         setJMenuBar(menuBar);
         pack();
         setVisible(true);
@@ -199,9 +227,24 @@ public class GUI extends JFrame {
         for (int i = rows - 1; i >= 0; i--) {
             tableModel.removeRow(i);
         }
-        (new TableRefresher(driver, activeBucket, tableModel)).execute();
+        (new TableRefresher(driver, activeBucket, tableModel, this)).execute();
         tableModel.fireTableDataChanged();
         objectsTable.setModel(tableModel);
     }
+    public void refreshTaskTable(File file){
+        (new TaskTableRefresher(taskTableModel, file)).execute();
+        taskTableModel.fireTableDataChanged();
+        taskTable.setModel(taskTableModel);
+    }
 
+    public void enableButtons(){
+        downloadButton.setEnabled(true);
+        uploadButton.setEnabled(true);
+        deleteButton.setEnabled(true);
+    }
+    public void disableButtons(){
+        downloadButton.setEnabled(false);
+        uploadButton.setEnabled(false);
+        deleteButton.setEnabled(false);
+    }
 }

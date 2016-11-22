@@ -27,7 +27,17 @@ public class CredentialsInputWindow  extends JFrame{
     public CredentialsInputWindow (){
         super("Please provide user credentials");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (UnsupportedLookAndFeelException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         accessKeyField.setPreferredSize(new Dimension(200, 20));
         secretKeyField.setPreferredSize(new Dimension(270, 20));
         accessKeyPanel.add(accessKeyLabel);

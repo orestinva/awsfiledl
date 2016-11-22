@@ -1,11 +1,16 @@
 package com.inva.aws;
 
+import com.amazonaws.event.ProgressEvent;
+import com.amazonaws.event.ProgressListener;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
+import com.amazonaws.services.s3.transfer.Upload;
+import com.inva.ui.view.TaskTableModel;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -17,9 +22,11 @@ import java.util.List;
 public class AWSDriver {
     private AmazonS3 s3;
     private TransferManager transferManager;
+    private TaskTableModel taskTableModel;
 
-    public AWSDriver(AmazonS3 s3){
+    public AWSDriver(AmazonS3 s3, TaskTableModel taskTableModel){
         this.s3 = s3;
+        this.taskTableModel = taskTableModel;
         transferManager = new TransferManager(s3);
     }
 
@@ -46,23 +53,33 @@ public class AWSDriver {
         return descriptions;
     }
 
-    public void copyTo(String bucket, String key, File file){
+    public void copyTo(String bucket, String key, final File file){
         try {
-            transferManager.download(bucket, key, file);
+            final Download myDownload = transferManager.download(bucket, key, file);
+            myDownload.addProgressListener(new ProgressListener() {
+                public void progressChanged(ProgressEvent progressEvent) {
+                    taskTableModel.updateStatus(file, myDownload.getProgress().getPercentTransferred());
+                }
+            });
         }
         catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    public void uploadTo(String bucket, String key, File file){
+    public void uploadTo(String bucket, String key, final File file){
         try {
-            transferManager.upload(bucket, key, file);
+            final Upload myUpload = transferManager.upload(bucket, key, file);
+            myUpload.addProgressListener(new ProgressListener() {
+                public void progressChanged(ProgressEvent progressEvent) {
+                    taskTableModel.updateStatus(file, myUpload.getProgress().getPercentTransferred());
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
+
 
     public void deleteSelectedObject(String bucketName, String keyName){
         try {

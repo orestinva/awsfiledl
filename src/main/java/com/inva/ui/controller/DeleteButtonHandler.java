@@ -8,11 +8,11 @@ import com.inva.ui.events.IEvent;
 /**
  * Created by inva on 11/14/2016.
  */
-public class DeleteEventHandler implements IButtonEventHandler {
+public class DeleteButtonHandler implements IButtonEventHandler {
 
     private AWSDriver driver;
 
-    public DeleteEventHandler(AWSDriver driver) {
+    public DeleteButtonHandler(AWSDriver driver) {
         this.driver = driver;
     }
 
