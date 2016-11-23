@@ -1,13 +1,12 @@
 package com.inva.ui.view;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.inva.aws.AWSDriver;
 import com.inva.ui.controller.DeleteButtonHandler;
 import com.inva.ui.controller.DownloadButtonHandler;
+import com.inva.ui.controller.GUIController;
 import com.inva.ui.controller.UploadButtonHandler;
-import com.inva.ui.events.DeleteEvent;
-import com.inva.ui.events.DownloadEvent;
-import com.inva.ui.events.UploadEvent;
+import com.inva.ui.events.*;
+import com.inva.ui.events.Event;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -29,7 +28,7 @@ public class GUI extends JFrame {
     private JButton downloadButton = new JButton("Download");
     private JButton deleteButton = new JButton("Delete");
     private JButton uploadButton = new JButton("Upload..");
-    private JComboBox buckets = new JComboBox();
+    private JComboBox bucketsDropDown = new JComboBox();
     private JTable objectsTable = new JTable();
     private JTable taskTable = new JTable();
     private JPanel bucketsPanel = new JPanel(new FlowLayout());
@@ -39,17 +38,12 @@ public class GUI extends JFrame {
     private TaskTableModel taskTableModel;
     private JScrollPane scrollPane;
     private JScrollPane taskScrollPane;
-    private String path;
     private final DefaultTableModel tableModel = (DefaultTableModel) objectsTable.getModel();
     private JMenuBar menuBar = new JMenuBar();
-    private DownloadButtonHandler dlHandler;
-    private AWSDriver driver;
-    private DownloadEvent dlEvent;
-    private UploadButtonHandler uplHandler;
-    private UploadEvent uplEvent;
-    private DeleteEvent delEvent;
-    private DeleteButtonHandler delHandler;
+
+
     private SettingsDialog settingsDialog;
+    private GUIController guiController;
 
     public GUI(AmazonS3 s3Client){
         super("AWS File Downloader");
@@ -94,21 +88,12 @@ public class GUI extends JFrame {
         viewMenu.add(menuSettings);
         menuBar.add(viewMenu);
 
-        //adding tasktablemodel
-        taskTableModel = new TaskTableModel();
-        taskTable.setModel(taskTableModel);
-        taskTable.getColumn("Status").setCellRenderer(new TaskTableProgressCellRenderer());
-
         //Configuring and enabling menu bar
         menuBar.setOpaque(true);
         menuBar.setPreferredSize(new Dimension(200, 20));
 
-
         //Adding driver and handlers
-        this.driver = new AWSDriver(s3Client, taskTableModel);
-        this.dlHandler = new DownloadButtonHandler(driver, this);
-        this.uplHandler = new UploadButtonHandler(driver, this);
-        this.delHandler = new DeleteButtonHandler(driver);
+        guiController = new GUIController(s3Client);
 
         //Adding header to table
         String[] columns = {"Name", "Size", "Type"};
@@ -122,18 +107,14 @@ public class GUI extends JFrame {
         scrollPane = new JScrollPane(objectsTable);
         objPanel.add(scrollPane, BorderLayout.CENTER);
 
-        //Adding drop-down list with buckets
-        buckets.setPreferredSize(new Dimension(200, 20));
-        ArrayList<String> bucketsList = driver.getBucketList();
-        for (String b : bucketsList){
-            buckets.addItem(b);
-        }
-        buckets.setSelectedIndex(-1);
+        //Adding drop-down list with bucketsDropDown
+        bucketsDropDown.setPreferredSize(new Dimension(200, 20));
+        bucketsDropDown.setSelectedIndex(-1);
 
         //Adding a listener to update table with objects when bucket is chosen from drop-down list
-        buckets.addActionListener(new ActionListener() {
+        bucketsDropDown.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                activeBucket = buckets.getSelectedItem().toString();
+                activeBucket = bucketsDropDown.getSelectedItem().toString();
 
                 //drawing table
                 refreshTable();
@@ -143,7 +124,7 @@ public class GUI extends JFrame {
             }
         });
         bucketsPanel.add(bucketLabel);
-        bucketsPanel.add(buckets);
+        bucketsPanel.add(bucketsDropDown);
 
         //Adding drop-down and its label to root objPanel
         objPanel.add(bucketsPanel, BorderLayout.PAGE_START);
@@ -154,16 +135,7 @@ public class GUI extends JFrame {
         //Adding a listener to download a file when downloadButton is pressed
         downloadButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-            objectsTable.getSelectedRow();
-            String objectName = (String)objectsTable.getValueAt(objectsTable.getSelectedRow(), 0);
-                //Getting path to download to
-                path = settingsDialog.getSaveDir();
-            File file = new File(path+File.separator+objectName);
-            dlEvent = new DownloadEvent(activeBucket, objectName, file);
-                if(dlHandler != null){
-                    dlHandler.handleEvent(dlEvent);
-                }
-
+            Event event = new Event("Download", Event.Type.BUTTON);
             }
         });
         buttonPanel.add(downloadButton);
@@ -171,13 +143,7 @@ public class GUI extends JFrame {
         //Adding a listener to delete an object when deleteButton is pressed
         deleteButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                objectsTable.getSelectedRow();
-                String objectName = (String)objectsTable.getValueAt(objectsTable.getSelectedRow(), 0);
-
-                delEvent = new DeleteEvent(activeBucket, objectName);
-                if(delHandler != null){
-                    delHandler.handleEvent(delEvent);
-                }
+                Event event = new Event("Delete", Event.Type.BUTTON);
 
             }
         });
@@ -186,17 +152,7 @@ public class GUI extends JFrame {
         //Adding a listener to upload a file when uploadButton is pressed and file chosen
         uploadButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                //Making filechooser dialog
-                JFileChooser fileChooser = new JFileChooser();
-                int ret = fileChooser.showDialog(GUI.this, "Choose File");
-                if (ret == JFileChooser.APPROVE_OPTION){
-                    //uploading selected file
-                    File file = fileChooser.getSelectedFile();
-                    uplEvent = new UploadEvent(activeBucket, file.getName(), file);
-                    if(uplHandler != null){
-                        uplHandler.handleEvent(uplEvent);
-                    }
-                }
+                Event event = new Event("Upload", Event.Type.BUTTON);
             }
         });
         buttonPanel.add(uploadButton);
@@ -247,4 +203,30 @@ public class GUI extends JFrame {
         uploadButton.setEnabled(false);
         deleteButton.setEnabled(false);
     }
+
+    public void handleEvent(Event event){
+        guiController.handleEvent(event);
+    }
+
+
+    public JTable getTaskTable() {
+        return taskTable;
+    }
+    public JComboBox getBucketsDropDown() {
+        return bucketsDropDown;
+    }
+
+    public String getActiveBucket() {
+        return activeBucket;
+    }
+
+    public JTable getObjectsTable() {
+        return objectsTable;
+    }
+
+
+    public SettingsDialog getSettingsDialog() {
+        return settingsDialog;
+    }
+
 }

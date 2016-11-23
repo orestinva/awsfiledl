@@ -12,17 +12,15 @@ import com.inva.ui.view.TaskTableModel;
 public class UploadButtonHandler implements IButtonEventHandler {
 
     private AWSDriver driver;
-    private GUI gui;
 
-    public UploadButtonHandler(AWSDriver driver, GUI gui) {
+    public UploadButtonHandler(AWSDriver driver) {
         this.driver = driver;
-        this.gui = gui;
     }
 
 
     public void handleEvent(IEvent event) {
         UploadEvent uploadEvent = (UploadEvent) event;
         driver.uploadTo(uploadEvent.getBucketName(), uploadEvent.getFileName(), uploadEvent.getFile());
-        gui.refreshTaskTable(uploadEvent.getFile());
+        //gui.refreshTaskTable(uploadEvent.getFile());
     }
 }

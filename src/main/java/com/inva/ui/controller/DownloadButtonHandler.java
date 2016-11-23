@@ -13,15 +13,13 @@ import com.inva.ui.view.TaskTableRowData;
  */
 public class DownloadButtonHandler implements IButtonEventHandler {
     private AWSDriver driver;
-    private GUI gui;
-    public DownloadButtonHandler(AWSDriver driver, GUI gui){
+    public DownloadButtonHandler(AWSDriver driver){
         this.driver = driver;
-        this.gui = gui;
     }
 
     public void handleEvent(IEvent event) {
         DownloadEvent dlEvent = (DownloadEvent) event;
         driver.copyTo(dlEvent.getBucketName(), dlEvent.getObjectName(), dlEvent.getFile());
-        gui.refreshTaskTable(dlEvent.getFile());
+        //gui.refreshTaskTable(dlEvent.getFile());
     }
 }
