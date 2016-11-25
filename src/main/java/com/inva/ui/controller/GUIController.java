@@ -6,9 +6,7 @@ import com.inva.ui.events.DeleteEvent;
 import com.inva.ui.events.DownloadEvent;
 import com.inva.ui.events.Event;
 import com.inva.ui.events.UploadEvent;
-import com.inva.ui.view.GUI;
-import com.inva.ui.view.TaskTableModel;
-import com.inva.ui.view.TaskTableProgressCellRenderer;
+import com.inva.ui.view.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -18,7 +16,6 @@ import java.util.ArrayList;
  * Created by inva on 11/23/2016.
  */
 public class GUIController {
-    private TaskTableModel taskTableModel;
     private GUI gui;
     private AWSDriver driver;
     private DownloadButtonHandler dlHandler;
@@ -29,14 +26,9 @@ public class GUIController {
     private DeleteButtonHandler delHandler;
 
 
-    public GUIController (AmazonS3 s3client){
-
-        taskTableModel = new TaskTableModel();
-        gui.getTaskTable().setModel(taskTableModel);
-        gui.getTaskTable().getColumn("Status").setCellRenderer(new TaskTableProgressCellRenderer());
-
-        driver = new AWSDriver(s3client, taskTableModel);
-
+    public GUIController (AmazonS3 s3client, GUI gui){
+        this.gui = gui;
+        driver = new AWSDriver(s3client, gui.getTaskTableModel());
         this.dlHandler = new DownloadButtonHandler(driver);
         this.uplHandler = new UploadButtonHandler(driver);
         this.delHandler = new DeleteButtonHandler(driver);
@@ -72,27 +64,50 @@ public class GUIController {
             if(uplHandler != null){
                 uplHandler.handleEvent(uplEvent);
             }
-
+            refreshTaskTable(file.getName(), file.length(), false);
         }
+        refreshTable();
     }
 
     private void onDeleteClicked() {
         String objectName = (String)gui.getObjectsTable().getValueAt(gui.getObjectsTable().getSelectedRow(), 0);
         delEvent = new DeleteEvent(gui.getActiveBucket(), objectName);
         if(delHandler != null){
-            delHandler.handleEvent(dlEvent);
+            delHandler.handleEvent(delEvent);
         }
     }
 
     private void onDownloadClicked() {
         String objectName = (String)gui.getObjectsTable().getValueAt(gui.getObjectsTable().getSelectedRow(), 0);
+        String sizeStr = (String)gui.getObjectsTable().getValueAt(gui.getObjectsTable().getSelectedRow(), 1);
+        long size = Long.parseLong(sizeStr);
+        String isFolderStr = (String) gui.getObjectsTable().getValueAt(gui.getObjectsTable().getSelectedRow(), 2);
+        boolean isFolder = true;
+        if (isFolderStr.equals("File")){
+            isFolder = false;
+        }
         String path = gui.getSettingsDialog().getSaveDir();
         File file = new File(path+File.separator+objectName);
         dlEvent = new DownloadEvent(gui.getActiveBucket(), objectName, file);
         if(dlHandler != null){
             dlHandler.handleEvent(dlEvent);
         }
+        refreshTaskTable(objectName, size, isFolder);
     }
 
+    public void refreshTable(){
+        int rows = gui.getTableModel().getRowCount();
+        for (int i = rows - 1; i >= 0; i--) {
+            gui.getTableModel().removeRow(i);
+        }
+        (new TableRefresher(driver, gui.getActiveBucket(), gui.getTableModel(), gui)).execute();
+        gui.getTableModel().fireTableDataChanged();
+        gui.getObjectsTable().setModel(gui.getTableModel());
+    }
+    public void refreshTaskTable(String fileName, long size, boolean isFolder){
+        (new TaskTableRefresher(gui.getTaskTableModel(), fileName, size, isFolder)).execute();
+        gui.getTaskTableModel().fireTableDataChanged();
+        gui.getTaskTable().setModel(gui.getTaskTableModel());
+    }
 
 }

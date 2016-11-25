@@ -2,6 +2,7 @@ package com.inva.ui.view;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
+import jdk.nashorn.internal.scripts.JO;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,6 +24,7 @@ public class CredentialsInputWindow  extends JFrame{
     private JButton okButton = new JButton("Go");
     private String secretKey;
     private String accessKey;
+    private JOptionPane optionPane = new JOptionPane();
 
     public CredentialsInputWindow (){
         super("Please provide user credentials");
@@ -44,12 +46,20 @@ public class CredentialsInputWindow  extends JFrame{
         accessKeyPanel.add(accessKeyField);
         secretKeyPanel.add(secretKeyLabel);
         secretKeyPanel.add(secretKeyField);
+        optionPane.setVisible(false);
+        optionPane.add(panel);
 
         okButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 setCredentials(accessKeyField.getText(), secretKeyField.getText());
-                dispose();
-                GUI gui = new GUI(new AmazonS3Client(new BasicAWSCredentials(getAccessKey(), getSecretKey())));
+                try {
+                    GUI gui = new GUI(new AmazonS3Client(new BasicAWSCredentials(getAccessKey(), getSecretKey())));
+                    dispose();
+                } catch (Exception e1){
+                    optionPane.showMessageDialog(panel, "Credentials you provided do not exist");
+                }
+
+
             }
         });
 

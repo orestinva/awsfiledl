@@ -11,11 +11,11 @@ import java.util.*;
  */
 public class TaskTableModel extends AbstractTableModel {
     private List<TaskTableRowData> dataList;
-    private Map<File, TaskTableRowData> mapLookup;
+    private Map<String, TaskTableRowData> mapLookup;
 
     public TaskTableModel(){
         dataList = new ArrayList<TaskTableRowData>(25);
-        mapLookup = new HashMap<File, TaskTableRowData>(25);
+        mapLookup = new HashMap<String, TaskTableRowData>(25);
     }
 
     public int getRowCount() {
@@ -31,7 +31,7 @@ public class TaskTableModel extends AbstractTableModel {
         Object value = null;
         switch (columnIndex) {
             case 0:
-                value = rowData.getFile();
+                value = rowData.getFileName();
                 break;
             case 1:
                 value = rowData.getFolderToStr(rowData.getFolder());
@@ -72,15 +72,15 @@ public class TaskTableModel extends AbstractTableModel {
         }
     }
 
-    public void addFile(File file) {
-        TaskTableRowData rowData = new TaskTableRowData(file, false);
-        mapLookup.put(file, rowData);
+    public void addFile(String fileName, long size, boolean isFolder) {
+        TaskTableRowData rowData = new TaskTableRowData(fileName, size, isFolder);
+        mapLookup.put(fileName, rowData);
         dataList.add(rowData);
         fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
     }
 
     public void updateStatus(File file, double progress) {
-        TaskTableRowData rowData = mapLookup.get(file);
+        TaskTableRowData rowData = mapLookup.get(file.getName());
         if (rowData != null) {
             int row = dataList.indexOf(rowData);
             float p = (float) progress / 100f;

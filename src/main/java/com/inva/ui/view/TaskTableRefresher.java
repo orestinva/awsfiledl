@@ -9,15 +9,20 @@ import java.io.File;
 public class TaskTableRefresher extends SwingWorker {
 
     private TaskTableModel taskTableModel;
-    private File file;
-    
-    public TaskTableRefresher(TaskTableModel taskTableModel, File file){
+    private String fileName;
+    private long size;
+    private boolean isFolder;
+
+
+    public TaskTableRefresher(TaskTableModel taskTableModel, String fileName, long size, boolean isFolder){
         this.taskTableModel = taskTableModel;
-        this.file = file;
+        this.fileName = fileName;
+        this.size = size;
+        this.isFolder = isFolder;
     }
 
     protected TaskTableModel doInBackground() throws Exception {
-        taskTableModel.addFile(file);
+        taskTableModel.addFile(fileName, size, isFolder);
         return taskTableModel;
     }
 }

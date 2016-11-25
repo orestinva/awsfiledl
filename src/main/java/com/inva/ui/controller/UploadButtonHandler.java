@@ -21,6 +21,5 @@ public class UploadButtonHandler implements IButtonEventHandler {
     public void handleEvent(IEvent event) {
         UploadEvent uploadEvent = (UploadEvent) event;
         driver.uploadTo(uploadEvent.getBucketName(), uploadEvent.getFileName(), uploadEvent.getFile());
-        //gui.refreshTaskTable(uploadEvent.getFile());
     }
 }

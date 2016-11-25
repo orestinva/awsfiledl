@@ -35,12 +35,11 @@ public class GUI extends JFrame {
     private JLabel bucketLabel = new JLabel("Select bucket:");
     private String activeBucket;
     private JTabbedPane tabbedPane = new JTabbedPane();
-    private TaskTableModel taskTableModel;
+    private TaskTableModel taskTableModel = new TaskTableModel();
     private JScrollPane scrollPane;
     private JScrollPane taskScrollPane;
     private final DefaultTableModel tableModel = (DefaultTableModel) objectsTable.getModel();
     private JMenuBar menuBar = new JMenuBar();
-
 
     private SettingsDialog settingsDialog;
     private GUIController guiController;
@@ -92,8 +91,8 @@ public class GUI extends JFrame {
         menuBar.setOpaque(true);
         menuBar.setPreferredSize(new Dimension(200, 20));
 
-        //Adding driver and handlers
-        guiController = new GUIController(s3Client);
+        taskTable.setModel(taskTableModel);
+        taskTable.getColumn("Status").setCellRenderer(new TaskTableProgressCellRenderer());
 
         //Adding header to table
         String[] columns = {"Name", "Size", "Type"};
@@ -111,13 +110,15 @@ public class GUI extends JFrame {
         bucketsDropDown.setPreferredSize(new Dimension(200, 20));
         bucketsDropDown.setSelectedIndex(-1);
 
+        guiController = new GUIController(s3Client, this);
+
         //Adding a listener to update table with objects when bucket is chosen from drop-down list
         bucketsDropDown.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 activeBucket = bucketsDropDown.getSelectedItem().toString();
 
                 //drawing table
-                refreshTable();
+                guiController.refreshTable();
 
                 //enabling buttons
                 enableButtons();
@@ -132,10 +133,12 @@ public class GUI extends JFrame {
         // All buttons are disabled until some bucket is chosen (in listener)
         disableButtons();
 
+
         //Adding a listener to download a file when downloadButton is pressed
         downloadButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
             Event event = new Event("Download", Event.Type.BUTTON);
+                handleEvent(event);
             }
         });
         buttonPanel.add(downloadButton);
@@ -144,6 +147,7 @@ public class GUI extends JFrame {
         deleteButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 Event event = new Event("Delete", Event.Type.BUTTON);
+                handleEvent(event);
 
             }
         });
@@ -153,11 +157,11 @@ public class GUI extends JFrame {
         uploadButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 Event event = new Event("Upload", Event.Type.BUTTON);
+                handleEvent(event);
             }
         });
         buttonPanel.add(uploadButton);
         objPanel.add(scrollPane, BorderLayout.CENTER);
-
         objPanel.add(buttonPanel, BorderLayout.PAGE_END);
 
         //Configuring root objPanel
@@ -165,6 +169,7 @@ public class GUI extends JFrame {
         tabbedPane.add(objPanel);
         tabbedPane.setTitleAt(0, "Objects");
         tabbedPane.add(taskPanel);
+
 
         taskScrollPane = new JScrollPane(taskTable);
         taskPanel.add(taskScrollPane);
@@ -176,21 +181,6 @@ public class GUI extends JFrame {
         pack();
         setVisible(true);
         setLocationRelativeTo(null);
-    }
-
-    public void refreshTable(){
-        int rows = tableModel.getRowCount();
-        for (int i = rows - 1; i >= 0; i--) {
-            tableModel.removeRow(i);
-        }
-        (new TableRefresher(driver, activeBucket, tableModel, this)).execute();
-        tableModel.fireTableDataChanged();
-        objectsTable.setModel(tableModel);
-    }
-    public void refreshTaskTable(File file){
-        (new TaskTableRefresher(taskTableModel, file)).execute();
-        taskTableModel.fireTableDataChanged();
-        taskTable.setModel(taskTableModel);
     }
 
     public void enableButtons(){
@@ -224,9 +214,16 @@ public class GUI extends JFrame {
         return objectsTable;
     }
 
-
     public SettingsDialog getSettingsDialog() {
         return settingsDialog;
+    }
+
+    public DefaultTableModel getTableModel() {
+        return tableModel;
+    }
+
+    public TaskTableModel getTaskTableModel() {
+        return taskTableModel;
     }
 
 }

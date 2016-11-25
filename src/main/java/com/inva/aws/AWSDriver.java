@@ -73,6 +73,7 @@ public class AWSDriver {
             myUpload.addProgressListener(new ProgressListener() {
                 public void progressChanged(ProgressEvent progressEvent) {
                     taskTableModel.updateStatus(file, myUpload.getProgress().getPercentTransferred());
+                    System.out.println("aaa");
                 }
             });
         } catch (Exception e) {

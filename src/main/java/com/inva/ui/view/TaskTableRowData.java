@@ -6,24 +6,24 @@ import java.io.File;
  * Created by inva on 11/19/2016.
  */
 public class TaskTableRowData {
-    private File file;
+    private String fileName;
     private boolean isFolder;
-    private long length;
+    private long size;
     private float status;
 
-    public TaskTableRowData(File file, boolean isFolder) {
-        this.file = file;
+    public TaskTableRowData(String fileName, long size, boolean isFolder) {
+        this.fileName = fileName;
         this.isFolder = isFolder;
-        this.length = file.length();
+        this.size = size;
         this.status = 0f;
     }
 
-    public File getFile() {
-        return file;
+    public String getFileName() {
+        return fileName;
     }
 
     public long getLength() {
-        return length;
+        return size;
     }
 
     public float getStatus() {
