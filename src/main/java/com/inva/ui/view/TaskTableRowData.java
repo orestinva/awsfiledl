@@ -10,12 +10,14 @@ public class TaskTableRowData {
     private boolean isFolder;
     private long size;
     private float status;
+    private String type;
 
-    public TaskTableRowData(String fileName, long size, boolean isFolder) {
+    public TaskTableRowData(String fileName, long size, boolean isFolder, String type) {
         this.fileName = fileName;
         this.isFolder = isFolder;
         this.size = size;
         this.status = 0f;
+        this.type = type;
     }
 
     public String getFileName() {
@@ -36,7 +38,7 @@ public class TaskTableRowData {
 
     public String getFolderToStr(boolean isFolder){
         String strIsFolder;
-        if (isFolder == false){
+        if (!isFolder){
             strIsFolder = "File";
         } else {
             strIsFolder = "Folder";
@@ -47,4 +49,8 @@ public class TaskTableRowData {
     public void setStatus(float status) {
         this.status = status;
     }
+    public String getType() {
+        return type;
+    }
+
 }

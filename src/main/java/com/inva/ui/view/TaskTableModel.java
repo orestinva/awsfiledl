@@ -14,8 +14,8 @@ public class TaskTableModel extends AbstractTableModel {
     private Map<String, TaskTableRowData> mapLookup;
 
     public TaskTableModel(){
-        dataList = new ArrayList<TaskTableRowData>(25);
-        mapLookup = new HashMap<String, TaskTableRowData>(25);
+        dataList = new ArrayList<TaskTableRowData>();
+        mapLookup = new HashMap<String, TaskTableRowData>();
     }
 
     public int getRowCount() {
@@ -23,7 +23,7 @@ public class TaskTableModel extends AbstractTableModel {
     }
 
     public int getColumnCount() {
-        return 4;
+        return 5;
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
@@ -40,6 +40,9 @@ public class TaskTableModel extends AbstractTableModel {
                 value = rowData.getLength();
                 break;
             case 3:
+                value = rowData.getType();
+                break;
+            case 4:
                 value = rowData.getStatus();
                 break;
         }
@@ -59,6 +62,9 @@ public class TaskTableModel extends AbstractTableModel {
                 name = "Size";
                 break;
             case 3:
+                name = "Task Type";
+                break;
+            case 4:
                 name = "Status";
                 break;
         }
@@ -67,13 +73,13 @@ public class TaskTableModel extends AbstractTableModel {
     public void setValueAt(float value, int rowIndex, int columnIndex) {
         TaskTableRowData rowData = dataList.get(rowIndex);
         switch (columnIndex) {
-            case 3:
+            case 4:
                 rowData.setStatus(value);
         }
     }
 
-    public void addFile(String fileName, long size, boolean isFolder) {
-        TaskTableRowData rowData = new TaskTableRowData(fileName, size, isFolder);
+    public void addFile(String fileName, long size, boolean isFolder, String type) {
+        TaskTableRowData rowData = new TaskTableRowData(fileName, size, isFolder, type);
         mapLookup.put(fileName, rowData);
         dataList.add(rowData);
         fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
@@ -84,8 +90,8 @@ public class TaskTableModel extends AbstractTableModel {
         if (rowData != null) {
             int row = dataList.indexOf(rowData);
             float p = (float) progress / 100f;
-            setValueAt(p, row, 3);
-            fireTableCellUpdated(row, 3);
+            setValueAt(p, row, 4);
+            fireTableCellUpdated(row, 4);
         }
     }
 }

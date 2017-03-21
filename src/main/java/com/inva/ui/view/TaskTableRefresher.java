@@ -12,17 +12,18 @@ public class TaskTableRefresher extends SwingWorker {
     private String fileName;
     private long size;
     private boolean isFolder;
+    private String type;
 
-
-    public TaskTableRefresher(TaskTableModel taskTableModel, String fileName, long size, boolean isFolder){
+    public TaskTableRefresher(TaskTableModel taskTableModel, String fileName, long size, boolean isFolder, String type){
         this.taskTableModel = taskTableModel;
         this.fileName = fileName;
         this.size = size;
         this.isFolder = isFolder;
+        this.type = type;
     }
 
     protected TaskTableModel doInBackground() throws Exception {
-        taskTableModel.addFile(fileName, size, isFolder);
+        taskTableModel.addFile(fileName, size, isFolder, type);
         return taskTableModel;
     }
 }

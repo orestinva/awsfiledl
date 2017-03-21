@@ -20,6 +20,5 @@ public class DownloadButtonHandler implements IButtonEventHandler {
     public void handleEvent(IEvent event) {
         DownloadEvent dlEvent = (DownloadEvent) event;
         driver.copyTo(dlEvent.getBucketName(), dlEvent.getObjectName(), dlEvent.getFile());
-        //gui.refreshTaskTable(dlEvent.getFile());
     }
 }

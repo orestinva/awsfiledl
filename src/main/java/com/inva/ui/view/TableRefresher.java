@@ -24,11 +24,15 @@ public class TableRefresher extends SwingWorker<DefaultTableModel, Void> {
     }
 
     protected DefaultTableModel doInBackground() throws Exception {
-
+        // remove rows
+        int rows = gui.getTableModel().getRowCount();
+        for (int i = rows - 1; i >= 0; i--) {
+            gui.getTableModel().removeRow(i);
+        }
         //get new rows
         try {
             gui.disableButtons();
-            ArrayList<AWSFileDescription> descriptions = (ArrayList<AWSFileDescription>) driver.getFileDescriptions(activeBucket);
+            ArrayList<AWSFileDescription> descriptions = (ArrayList<AWSFileDescription>) driver.getFileDescriptions(gui.getActiveBucket());
             for(AWSFileDescription d : descriptions){
                 String[] data = new String[3];
                 data[0] = d.getObjectName();
@@ -44,7 +48,7 @@ public class TableRefresher extends SwingWorker<DefaultTableModel, Void> {
 
     public String isFolderToStr(boolean isFolder) {
         String strIsFolder;
-        if (isFolder == false){
+        if (!isFolder){
             strIsFolder = "File";
         } else {
             strIsFolder = "Folder";

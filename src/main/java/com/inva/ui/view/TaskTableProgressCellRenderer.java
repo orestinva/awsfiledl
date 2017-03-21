@@ -14,7 +14,7 @@ public class TaskTableProgressCellRenderer extends JProgressBar implements Table
         if (value instanceof Float) {
             progress = Math.round(((Float) value) * 100f);
         } else if (value instanceof Integer) {
-            //progress = (int)value;
+            progress = (Integer)value;
         }
         setValue(progress);
         return this;

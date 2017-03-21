@@ -3,8 +3,6 @@ package com.inva.ui.controller;
 import com.inva.ui.events.IEvent;
 import com.inva.ui.events.UploadEvent;
 import com.inva.aws.AWSDriver;
-import com.inva.ui.view.GUI;
-import com.inva.ui.view.TaskTableModel;
 
 /**
  * Created by inva on 11/14/2016.

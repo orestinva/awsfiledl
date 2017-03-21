@@ -3,16 +3,16 @@ package com.inva.aws;
 import com.amazonaws.event.ProgressEvent;
 import com.amazonaws.event.ProgressListener;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.DeleteObjectRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.*;
 import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.Upload;
+import com.inva.ui.controller.GUIController;
 import com.inva.ui.view.TaskTableModel;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +23,7 @@ public class AWSDriver {
     private AmazonS3 s3;
     private TransferManager transferManager;
     private TaskTableModel taskTableModel;
+    private GUIController guiController;
 
     public AWSDriver(AmazonS3 s3, TaskTableModel taskTableModel){
         this.s3 = s3;
@@ -38,14 +39,17 @@ public class AWSDriver {
         }
         return bucketsStringList;
     }
+
     public List<AWSFileDescription> getFileDescriptions (String bucketName){
         ObjectListing listing = s3.listObjects(bucketName);
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         List<AWSFileDescription> descriptions = new ArrayList<AWSFileDescription>();
         for(S3ObjectSummary o : summaries){
-            boolean isFolder = false;
+            boolean isFolder;
             if (o.getKey().endsWith("/")){
                 isFolder = true;
+            } else {
+                isFolder = false;
             }
             AWSFileDescription description = new AWSFileDescription(o.getKey(), isFolder, o.getSize());
             descriptions.add(description);
@@ -59,6 +63,7 @@ public class AWSDriver {
             myDownload.addProgressListener(new ProgressListener() {
                 public void progressChanged(ProgressEvent progressEvent) {
                     taskTableModel.updateStatus(file, myDownload.getProgress().getPercentTransferred());
+
                 }
             });
         }
@@ -73,9 +78,12 @@ public class AWSDriver {
             myUpload.addProgressListener(new ProgressListener() {
                 public void progressChanged(ProgressEvent progressEvent) {
                     taskTableModel.updateStatus(file, myUpload.getProgress().getPercentTransferred());
-                    System.out.println("aaa");
+                    //if(myUpload.getProgress().getPercentTransferred() == 100.00){
+                     //   AWSDriver.this.guiController.refreshTable();
+                    //}
                 }
             });
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -84,11 +92,31 @@ public class AWSDriver {
 
     public void deleteSelectedObject(String bucketName, String keyName){
         try {
-            s3.deleteObject(new DeleteObjectRequest(bucketName, keyName));
+            DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(bucketName, keyName);
+            s3.deleteObject(deleteObjectRequest);
+            Thread.sleep(70);
+            guiController.refreshTable();
         } catch (Exception e){
             e.printStackTrace();
         }
 
+    }
+
+    public void createFolder (String bucketName, String folderName){
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(0);
+        InputStream emptyContent = new ByteArrayInputStream(new byte[0]);
+        try {
+            final Upload myUpload = transferManager.upload(bucketName, folderName, emptyContent, metadata);
+            Thread.sleep(70);
+            guiController.refreshTable();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setGuiController(GUIController guiController) {
+        this.guiController = guiController;
     }
 
 }

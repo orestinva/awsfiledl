@@ -5,7 +5,6 @@ package com.inva.aws;
  */
 public class AWSFileDescription {
 
-
     private String objectName;
     private boolean isFolder;
     private long size;
@@ -14,6 +13,7 @@ public class AWSFileDescription {
         this.objectName = objectName;
         this.isFolder = isFolder;
         this.size = size;
+
     }
 
     public String getObjectName() {

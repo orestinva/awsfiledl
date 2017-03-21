@@ -16,7 +16,6 @@ public class DeleteButtonHandler implements IButtonEventHandler {
         this.driver = driver;
     }
 
-
     public void handleEvent(IEvent event) {
         DeleteEvent deleteEvent = (DeleteEvent) event;
         driver.deleteSelectedObject(deleteEvent.getBucketName(), deleteEvent.getObjectName());

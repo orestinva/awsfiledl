@@ -2,10 +2,7 @@ package com.inva.ui.controller;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.inva.aws.AWSDriver;
-import com.inva.ui.events.DeleteEvent;
-import com.inva.ui.events.DownloadEvent;
-import com.inva.ui.events.Event;
-import com.inva.ui.events.UploadEvent;
+import com.inva.ui.events.*;
 import com.inva.ui.view.*;
 
 import javax.swing.*;
@@ -24,20 +21,18 @@ public class GUIController {
     private UploadEvent uplEvent;
     private DeleteEvent delEvent;
     private DeleteButtonHandler delHandler;
-
+    private MakeFolderEvent mfEvent;
+    private MakeFolderButtonHandler mfHandler;
 
     public GUIController (AmazonS3 s3client, GUI gui){
         this.gui = gui;
-        driver = new AWSDriver(s3client, gui.getTaskTableModel());
+        this.driver = new AWSDriver(s3client, gui.getTaskTableModel());
         this.dlHandler = new DownloadButtonHandler(driver);
         this.uplHandler = new UploadButtonHandler(driver);
         this.delHandler = new DeleteButtonHandler(driver);
-
-        ArrayList<String> bucketsList = driver.getBucketList();
-        for (String b : bucketsList){
-            gui.getBucketsDropDown().addItem(b);
-        }
-
+        this.mfHandler = new MakeFolderButtonHandler(driver);
+        initBuckets();
+        driver.setGuiController(this);
     }
 
     public void handleEvent(Event event){
@@ -50,7 +45,23 @@ public class GUIController {
         if (event.getEventID().equals("Upload")&& event.getType().equals(Event.Type.BUTTON)){
             onUploadClicked();
         }
+        if (event.getEventID().equals("MkFolder")&& event.getType().equals(Event.Type.BUTTON) ){
+            onMakeFolderClicked();
+        }
 
+    }
+
+    private void onMakeFolderClicked() {
+        try {
+            String folderName = gui.getOptionPane().showInputDialog(gui, "Please enter folder name (non-alphanumeric characters will be ignored)");
+            String fName = folderName.replaceAll("[^A-Za-z0-9]", "");
+            mfEvent = new MakeFolderEvent(gui.getActiveBucket(), fName + "/");
+            if(mfHandler != null){
+                mfHandler.handleEvent(mfEvent);
+            }
+        } catch (Exception e){
+
+        }
     }
 
     private void onUploadClicked() {
@@ -64,9 +75,8 @@ public class GUIController {
             if(uplHandler != null){
                 uplHandler.handleEvent(uplEvent);
             }
-            refreshTaskTable(file.getName(), file.length(), false);
+            refreshTaskTable(file.getName(), file.length(), false, "Upload");
         }
-        refreshTable();
     }
 
     private void onDeleteClicked() {
@@ -92,7 +102,7 @@ public class GUIController {
         if(dlHandler != null){
             dlHandler.handleEvent(dlEvent);
         }
-        refreshTaskTable(objectName, size, isFolder);
+        refreshTaskTable(objectName, size, isFolder, "Download");
     }
 
     public void refreshTable(){
@@ -101,13 +111,18 @@ public class GUIController {
             gui.getTableModel().removeRow(i);
         }
         (new TableRefresher(driver, gui.getActiveBucket(), gui.getTableModel(), gui)).execute();
-        gui.getTableModel().fireTableDataChanged();
-        gui.getObjectsTable().setModel(gui.getTableModel());
     }
-    public void refreshTaskTable(String fileName, long size, boolean isFolder){
-        (new TaskTableRefresher(gui.getTaskTableModel(), fileName, size, isFolder)).execute();
+    public void refreshTaskTable(String fileName, long size, boolean isFolder, String type){
+        (new TaskTableRefresher(gui.getTaskTableModel(), fileName, size, isFolder, type)).execute();
         gui.getTaskTableModel().fireTableDataChanged();
         gui.getTaskTable().setModel(gui.getTaskTableModel());
+    }
+
+    public void initBuckets(){
+        ArrayList<String> bucketsList = driver.getBucketList();
+        for (String b : bucketsList){
+            gui.getBucketsDropDown().addItem(b);
+        }
     }
 
 }

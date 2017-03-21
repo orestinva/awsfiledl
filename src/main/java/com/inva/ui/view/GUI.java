@@ -1,21 +1,14 @@
 package com.inva.ui.view;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.inva.ui.controller.DeleteButtonHandler;
-import com.inva.ui.controller.DownloadButtonHandler;
 import com.inva.ui.controller.GUIController;
-import com.inva.ui.controller.UploadButtonHandler;
-import com.inva.ui.events.*;
 import com.inva.ui.events.Event;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.io.File;
-import java.util.ArrayList;
 
 /**
  * Created by inva on 10/26/2016.
@@ -28,6 +21,7 @@ public class GUI extends JFrame {
     private JButton downloadButton = new JButton("Download");
     private JButton deleteButton = new JButton("Delete");
     private JButton uploadButton = new JButton("Upload..");
+    private JButton createFolderButton = new JButton("Create Folder..");
     private JComboBox bucketsDropDown = new JComboBox();
     private JTable objectsTable = new JTable();
     private JTable taskTable = new JTable();
@@ -40,6 +34,8 @@ public class GUI extends JFrame {
     private JScrollPane taskScrollPane;
     private final DefaultTableModel tableModel = (DefaultTableModel) objectsTable.getModel();
     private JMenuBar menuBar = new JMenuBar();
+
+    private JOptionPane optionPane = new JOptionPane();
 
     private SettingsDialog settingsDialog;
     private GUIController guiController;
@@ -59,8 +55,12 @@ public class GUI extends JFrame {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+
         //check if properties exist, if no - set default
         settingsDialog.checkIfPropertiesExist();
+
+        optionPane.setVisible(false);
+        objPanel.add(optionPane);
 
         //Adding file menu
         JMenu fileMenu = new JMenu("File");
@@ -91,27 +91,15 @@ public class GUI extends JFrame {
         menuBar.setOpaque(true);
         menuBar.setPreferredSize(new Dimension(200, 20));
 
-        taskTable.setModel(taskTableModel);
-        taskTable.getColumn("Status").setCellRenderer(new TaskTableProgressCellRenderer());
-
-        //Adding header to table
-        String[] columns = {"Name", "Size", "Type"};
-        tableModel.setColumnIdentifiers(columns);
-
-        //Configuring table
-        objectsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        objectsTable.setModel(tableModel);
-        objectsTable.getTableHeader().setReorderingAllowed(false);
-        objectsTable.getTableHeader().setResizingAllowed(true);
-        scrollPane = new JScrollPane(objectsTable);
-        objPanel.add(scrollPane, BorderLayout.CENTER);
+        configureTable();
 
         //Adding drop-down list with bucketsDropDown
         bucketsDropDown.setPreferredSize(new Dimension(200, 20));
-        bucketsDropDown.setSelectedIndex(-1);
 
+        //Adding GUIcontroller
         guiController = new GUIController(s3Client, this);
 
+        bucketsDropDown.setSelectedIndex(-1);
         //Adding a listener to update table with objects when bucket is chosen from drop-down list
         bucketsDropDown.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -120,8 +108,6 @@ public class GUI extends JFrame {
                 //drawing table
                 guiController.refreshTable();
 
-                //enabling buttons
-                enableButtons();
             }
         });
         bucketsPanel.add(bucketLabel);
@@ -133,12 +119,15 @@ public class GUI extends JFrame {
         // All buttons are disabled until some bucket is chosen (in listener)
         disableButtons();
 
-
         //Adding a listener to download a file when downloadButton is pressed
         downloadButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-            Event event = new Event("Download", Event.Type.BUTTON);
-                handleEvent(event);
+                try {
+                    Event downloadEvent = new Event("Download", Event.Type.BUTTON);
+                    handleEvent(downloadEvent);
+                } catch (Exception e1){
+                    JOptionPane.showMessageDialog(objPanel, "Please select an object in table to download");
+                }
             }
         });
         buttonPanel.add(downloadButton);
@@ -146,8 +135,12 @@ public class GUI extends JFrame {
         //Adding a listener to delete an object when deleteButton is pressed
         deleteButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Event event = new Event("Delete", Event.Type.BUTTON);
-                handleEvent(event);
+                try {
+                    Event deleteEvent = new Event("Delete", Event.Type.BUTTON);
+                    handleEvent(deleteEvent);
+                } catch (Exception e1){
+                    JOptionPane.showMessageDialog(objPanel, "Please select an object in table to delete");
+                }
 
             }
         });
@@ -156,11 +149,20 @@ public class GUI extends JFrame {
         //Adding a listener to upload a file when uploadButton is pressed and file chosen
         uploadButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Event event = new Event("Upload", Event.Type.BUTTON);
-                handleEvent(event);
+                Event uploadEvent = new Event("Upload", Event.Type.BUTTON);
+                handleEvent(uploadEvent);
             }
         });
         buttonPanel.add(uploadButton);
+
+        createFolderButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Event createFolderEvent = new Event("MkFolder", Event.Type.BUTTON);
+                handleEvent(createFolderEvent);
+            }
+        });
+
+        buttonPanel.add(createFolderButton);
         objPanel.add(scrollPane, BorderLayout.CENTER);
         objPanel.add(buttonPanel, BorderLayout.PAGE_END);
 
@@ -170,7 +172,6 @@ public class GUI extends JFrame {
         tabbedPane.setTitleAt(0, "Objects");
         tabbedPane.add(taskPanel);
 
-
         taskScrollPane = new JScrollPane(taskTable);
         taskPanel.add(taskScrollPane);
         tabbedPane.add(taskPanel);
@@ -178,8 +179,8 @@ public class GUI extends JFrame {
         tabbedPane.setVisible(true);
         setContentPane(tabbedPane);
         setJMenuBar(menuBar);
-        pack();
         setVisible(true);
+        pack();
         setLocationRelativeTo(null);
     }
 
@@ -187,21 +188,41 @@ public class GUI extends JFrame {
         downloadButton.setEnabled(true);
         uploadButton.setEnabled(true);
         deleteButton.setEnabled(true);
+        createFolderButton.setEnabled(true);
     }
     public void disableButtons(){
         downloadButton.setEnabled(false);
         uploadButton.setEnabled(false);
         deleteButton.setEnabled(false);
+        createFolderButton.setEnabled(false);
     }
 
     public void handleEvent(Event event){
         guiController.handleEvent(event);
     }
 
+    public void configureTable(){
+        taskTable.setModel(taskTableModel);
+        taskTable.getColumn("Status").setCellRenderer(new TaskTableProgressCellRenderer());
+
+        //Adding header to table
+        String[] columns = {"Name", "Size", "Type"};
+        tableModel.setColumnIdentifiers(columns);
+
+        // Configuring table
+        objectsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        objectsTable.setModel(tableModel);
+        objectsTable.getTableHeader().setReorderingAllowed(false);
+        objectsTable.getTableHeader().setResizingAllowed(true);
+        objectsTable.setDefaultEditor(Object.class, null);
+        scrollPane = new JScrollPane(objectsTable);
+        objPanel.add(scrollPane, BorderLayout.CENTER);
+    }
 
     public JTable getTaskTable() {
         return taskTable;
     }
+
     public JComboBox getBucketsDropDown() {
         return bucketsDropDown;
     }
@@ -224,6 +245,10 @@ public class GUI extends JFrame {
 
     public TaskTableModel getTaskTableModel() {
         return taskTableModel;
+    }
+
+    public JOptionPane getOptionPane() {
+        return optionPane;
     }
 
 }
