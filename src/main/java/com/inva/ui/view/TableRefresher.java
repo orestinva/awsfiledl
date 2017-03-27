@@ -24,24 +24,26 @@ public class TableRefresher extends SwingWorker<DefaultTableModel, Void> {
     }
 
     protected DefaultTableModel doInBackground() throws Exception {
-        // remove rows
-        int rows = gui.getTableModel().getRowCount();
-        for (int i = rows - 1; i >= 0; i--) {
-            gui.getTableModel().removeRow(i);
-        }
-        //get new rows
-        try {
-            gui.disableButtons();
-            ArrayList<AWSFileDescription> descriptions = (ArrayList<AWSFileDescription>) driver.getFileDescriptions(gui.getActiveBucket());
-            for(AWSFileDescription d : descriptions){
-                String[] data = new String[3];
-                data[0] = d.getObjectName();
-                data[1] = d.getSizeToStr();
-                data[2] = isFolderToStr(d.getIsFolder());
-                tableModel.addRow(data);
+        synchronized (gui.getObjectsTable()) {
+            // remove rows
+            int rows = gui.getTableModel().getRowCount();
+            for (int i = rows - 1; i >= 0; i--) {
+                gui.getTableModel().removeRow(i);
             }
-        } catch (Exception e){
-            //todo = handle this exc
+            //get new rows
+            try {
+                gui.disableButtons();
+                ArrayList<AWSFileDescription> descriptions = (ArrayList<AWSFileDescription>) driver.getFileDescriptions(gui.getActiveBucket());
+                for (AWSFileDescription d : descriptions) {
+                    String[] data = new String[3];
+                    data[0] = d.getObjectName();
+                    data[1] = d.getSizeToStr();
+                    data[2] = isFolderToStr(d.getIsFolder());
+                    tableModel.addRow(data);
+                }
+            } catch (Exception e) {
+                //todo = handle this exc
+            }
         }
         return tableModel;
     }
@@ -58,5 +60,7 @@ public class TableRefresher extends SwingWorker<DefaultTableModel, Void> {
 
     public void done(){
         gui.enableButtons();
+        gui.getTableModel().fireTableDataChanged();
+        gui.getObjectsTable().setModel(gui.getTableModel());
     }
 }

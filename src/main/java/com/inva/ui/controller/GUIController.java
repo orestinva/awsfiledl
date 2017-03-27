@@ -106,12 +106,9 @@ public class GUIController {
     }
 
     public void refreshTable(){
-        int rows = gui.getTableModel().getRowCount();
-        for (int i = rows - 1; i >= 0; i--) {
-            gui.getTableModel().removeRow(i);
-        }
-        (new TableRefresher(driver, gui.getActiveBucket(), gui.getTableModel(), gui)).execute();
+            (new TableRefresher(driver, gui.getActiveBucket(), gui.getTableModel(), gui)).execute();
     }
+
     public void refreshTaskTable(String fileName, long size, boolean isFolder, String type){
         (new TaskTableRefresher(gui.getTaskTableModel(), fileName, size, isFolder, type)).execute();
         gui.getTaskTableModel().fireTableDataChanged();

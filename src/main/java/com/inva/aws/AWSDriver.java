@@ -78,9 +78,9 @@ public class AWSDriver {
             myUpload.addProgressListener(new ProgressListener() {
                 public void progressChanged(ProgressEvent progressEvent) {
                     taskTableModel.updateStatus(file, myUpload.getProgress().getPercentTransferred());
-                    //if(myUpload.getProgress().getPercentTransferred() == 100.00){
-                     //   AWSDriver.this.guiController.refreshTable();
-                    //}
+                    if(myUpload.getProgress().getPercentTransferred() == 100.00){
+                        AWSDriver.this.guiController.refreshTable();
+                    }
                 }
             });
 
